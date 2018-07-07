@@ -28,6 +28,7 @@
 
 import hashlib
 import hmac
+import groestlcoin_hash
 
 from lib.util import bytes_to_int, int_to_bytes, hex_to_bytes
 
@@ -41,6 +42,10 @@ HASHX_LEN = 11
 def sha256(x):
     '''Simple wrapper of hashlib sha256.'''
     return _sha256(x).digest()
+
+
+def groestlHash(x):
+    return groestlcoin_hash.getHash(x, len(x))
 
 
 def ripemd160(x):
