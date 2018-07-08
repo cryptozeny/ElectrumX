@@ -316,7 +316,8 @@ class MicroBitcoin(Coin):
 
     @classmethod
     def header_hash(cls, header):
-        if timestamp > FORK_TIMESTAMP:
+        timestamp = struct.unpack('<I', header[68:72])[0]
+        if timestamp > cls.FORK_TIMESTAMP:
             return groestlHash(header)
         else:
             return double_sha256(header)
