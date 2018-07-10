@@ -309,6 +309,7 @@ class MicroBitcoin(Coin):
     P2PKH_VERBYTE = bytes.fromhex("26")
     P2SH_VERBYTES = [bytes.fromhex("51")]
     GENESIS_HASH = ("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f")
+    DESERIALIZER = lib_tx.DeserializerSegWit
     TX_COUNT = 265026255
     TX_COUNT_HEIGHT = 499923
     TX_PER_BLOCK = 50
@@ -321,4 +322,3 @@ class MicroBitcoin(Coin):
             return groestlHash(header)
         else:
             return double_sha256(header)
-
