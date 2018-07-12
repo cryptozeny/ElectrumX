@@ -306,8 +306,8 @@ class MicroBitcoin(Coin):
     NET = "mainnet"
     VALUE_PER_COIN = 10000
     FORK_TIMESTAMP = 1527625482
-    P2PKH_VERBYTE = bytes.fromhex("26")
-    P2SH_VERBYTES = [bytes.fromhex("51")]
+    P2PKH_VERBYTE = bytes.fromhex("1A")
+    P2SH_VERBYTES = [bytes.fromhex("33")]
     GENESIS_HASH = ("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f")
     DESERIALIZER = lib_tx.DeserializerSegWit
     TX_COUNT = 265026255
