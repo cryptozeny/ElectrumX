@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Usage::
-    ./server.py [<port>]
+    ./rpcd.py [<port>]
 """
 from aiorpcx import ClientSession
 from server.controller import Controller
@@ -92,7 +92,7 @@ class RpcServer(BaseHTTPRequestHandler):
                 'blockchain.transaction.broadcast',
                 'blockchain.transaction.get',
                 'blockchain.transaction.get_merkle',
-                "getinfo"
+                'getinfo'
             ]
 
             async def send_request():
