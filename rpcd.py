@@ -10,7 +10,8 @@ from os import environ
 import asyncio
 import json
 
-def handle_json(raw_data):
+
+def handle_rpc(raw_data):
     result = {
         "jsonrpc": "2.0",
         "params": [],
@@ -51,6 +52,35 @@ def handle_json(raw_data):
 
     return result
 
+
+def create_rpc(result_data, rpc_id):
+    result = {
+        "jsonrpc": "2.0",
+        "id": rpc_id
+    }
+
+    error = False
+    error_message = ""
+    error_code = 0
+
+    if type(result_data) == list or type(result_data) == dict:
+        data = result_data
+    else:
+        error = True
+        error_message = "Invalid Request: {}".format(result_data)
+        error_code = -32600 
+
+    if error == True:
+        result["error"] = {
+            "code": error_code,
+            "message": error_message
+        }
+    else:
+        result["result"] = data
+
+    return result
+
+
 class RpcServer(BaseHTTPRequestHandler):
     def _set_response(self):
         self.send_response(200)
@@ -62,11 +92,9 @@ class RpcServer(BaseHTTPRequestHandler):
         post_data = self.rfile.read(content_length)
 
         response = {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": None}
-        data = handle_json(post_data.decode('utf-8'))
+        data = handle_rpc(post_data.decode('utf-8'))
         rpc_port = int(environ.get('RPC_PORT', 8000))
         port = int(environ.get('RPC_PORT', 7403))
-
-        print(data)
 
         if "error" not in data:
 
@@ -81,6 +109,7 @@ class RpcServer(BaseHTTPRequestHandler):
                 'blockchain.address.subscribe',
                 'blockchain.block.get_chunk',
                 'blockchain.block.get_header',
+                'blockchain.block.get_header_range',
                 'blockchain.estimatefee',
                 'blockchain.headers.subscribe',
                 'blockchain.relayfee',
@@ -92,19 +121,22 @@ class RpcServer(BaseHTTPRequestHandler):
                 'blockchain.transaction.broadcast',
                 'blockchain.transaction.get',
                 'blockchain.transaction.get_merkle',
-                'getinfo'
+                'daemon.getinfo'
             ]
 
             async def send_request():
                 client_port = port
-                if method in ["getinfo"]:
+                if method in ["daemon.getinfo"]:
                     client_port = rpc_port
                     
                 async with ClientSession('localhost', client_port) as session:
-                    response = await session.send_request(method, params, timeout=15)
+                    try:
+                        response = await session.send_request(method, params, timeout=15)
+                    except Exception as e:
+                        response = e
 
                 self._set_response()
-                self.wfile.write(json.dumps(response, indent=4, sort_keys=True).encode('utf-8'))
+                self.wfile.write(json.dumps(create_rpc(response, data["id"])).encode('utf-8'))
 
             loop = asyncio.get_event_loop()
             try:
@@ -132,6 +164,7 @@ def run(server_class=HTTPServer, handler_class=RpcServer, port=4321):
 
     rpcd.server_close()
     print('Stopping rpcd...\n')
+
 
 if __name__ == '__main__':
     from sys import argv
