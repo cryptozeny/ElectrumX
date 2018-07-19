@@ -96,13 +96,12 @@ class RpcServer(BaseHTTPRequestHandler):
             ]
 
             async def send_request():
-                if method == "getinfo":
-                    async with ClientSession('localhost', rpc_port) as session:
-                        response = await session.send_request(method, params, timeout=15)
-
-                else:
-                    async with ClientSession('localhost', port) as session:
-                        response = await session.send_request(method, params, timeout=15)
+                client_port = port
+                if method in ["getinfo"]:
+                    client_port = rpc_port
+                    
+                async with ClientSession('localhost', client_port) as session:
+                    response = await session.send_request(method, params, timeout=15)
 
                 self._set_response()
                 self.wfile.write(json.dumps(response, indent=4, sort_keys=True).encode('utf-8'))
