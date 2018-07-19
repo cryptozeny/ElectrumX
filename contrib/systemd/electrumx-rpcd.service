@@ -1,0 +1,9 @@
+[Unit]
+Description=ElectrumX Rpc Http Server
+
+[Service]
+Type=simple
+ExecStart=/path/to/electrumx/rpcd.py
+
+[Install]
+WantedBy=multi-user.target

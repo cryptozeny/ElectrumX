@@ -121,12 +121,12 @@ class RpcServer(BaseHTTPRequestHandler):
                 'blockchain.transaction.broadcast',
                 'blockchain.transaction.get',
                 'blockchain.transaction.get_merkle',
-                'daemon.getinfo'
+                'getinfo'
             ]
 
             async def send_request():
                 client_port = port
-                if method in ["daemon.getinfo"]:
+                if method in ["getinfo"]:
                     client_port = rpc_port
                     
                 async with ClientSession('localhost', client_port) as session:

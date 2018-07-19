@@ -823,6 +823,24 @@ class Controller(ServerBase):
         height = self.non_negative_integer(height)
         return self.electrum_header(height)
 
+    def block_get_header_range(self, height_start, height_end):
+        '''Retun list of block headers in range'''
+
+        height_start = self.non_negative_integer(height_start)
+        height_end = self.non_negative_integer(height_end)
+
+        if height_start > height_end:
+            height_start, height_end = height_end, height_start
+
+        headers_list = []
+        for height in range(height_start, height_end):
+            try:
+                headers_list.append(self.electrum_header(height))
+            except Exception as e:
+                break
+
+        return headers_list
+
     async def estimatefee(self, number):
         '''The estimated transaction fee per kilobyte to be paid for a
         transaction to be included within a certain number of blocks.

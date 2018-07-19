@@ -429,6 +429,7 @@ class ElectrumX(SessionBase):
             'blockchain.address.subscribe': self.address_subscribe,
             'blockchain.block.get_chunk': self.block_get_chunk,
             'blockchain.block.get_header': controller.block_get_header,
+            'blockchain.block.get_header_range': controller.block_get_header_range,
             'blockchain.estimatefee': controller.estimatefee,
             'blockchain.headers.subscribe': self.headers_subscribe,
             'blockchain.relayfee': controller.relayfee,
