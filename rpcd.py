@@ -9,6 +9,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from os import environ
 import asyncio
 import json
+import re
 
 
 def handle_rpc(raw_data):
@@ -63,20 +64,25 @@ def create_rpc(result_data, rpc_id):
     error_message = ""
     error_code = 0
 
-    if type(result_data) == list or type(result_data) == dict:
-        data = result_data
-    else:
-        error = True
-        error_message = "Invalid Request: {}".format(result_data)
-        error_code = -32600 
+    try:
+        if type(result_data) == list or type(result_data) == dict or len(re.findall(r'^[a-fA-F0-9]+$', result_data)) > 0:
+            data = result_data
 
-    if error == True:
-        result["error"] = {
-            "code": error_code,
-            "message": error_message
-        }
-    else:
-        result["result"] = data
+        else:
+            error = True
+            error_message = "Invalid Request: {}".format(result_data)
+            error_code = -32600 
+
+        if error == True:
+            result["error"] = {
+                "code": error_code,
+                "message": error_message
+            }
+        else:
+            result["result"] = data
+    except Exception as e:
+        result = {"jsonrpc": "2.0", "error": {"code": -32700, "message": "Parse error"}, "id": None}
+
 
     return result
 
@@ -86,7 +92,7 @@ class RpcServer(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
-
+        
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
@@ -120,6 +126,7 @@ class RpcServer(BaseHTTPRequestHandler):
                 'blockchain.scripthash.subscribe',
                 'blockchain.transaction.broadcast',
                 'blockchain.transaction.get',
+                'blockchain.transaction.get_verbose',
                 'blockchain.transaction.get_merkle',
                 'getinfo'
             ]

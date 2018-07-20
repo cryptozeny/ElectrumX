@@ -444,6 +444,7 @@ class ElectrumX(SessionBase):
             'blockchain.scripthash.subscribe': self.scripthash_subscribe,
             'blockchain.transaction.broadcast': self.transaction_broadcast,
             'blockchain.transaction.get': controller.transaction_get,
+            'blockchain.transaction.get_verbose': controller.transaction_get_verbose,
             'blockchain.transaction.get_merkle':
             controller.transaction_get_merkle,
             'server.add_peer': self.add_peer,

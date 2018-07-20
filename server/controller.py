@@ -869,6 +869,20 @@ class Controller(ServerBase):
         tx_hash: the transaction hash as a hexadecimal string
         verbose: passed on to the daemon
         '''
+
+        self.assert_tx_hash(tx_hash)
+        if verbose not in (True, False):
+            raise RPCError(BAD_REQUEST, f'"verbose" must be a boolean')
+
+        return await self.daemon_request('getrawtransaction', tx_hash, verbose)
+
+    async def transaction_get_verbose(self, tx_hash, verbose=True):
+        '''Return the serialized raw transaction given its hash
+
+        tx_hash: the transaction hash as a hexadecimal string
+        verbose: passed on to the daemon
+        '''
+
         self.assert_tx_hash(tx_hash)
         if verbose not in (True, False):
             raise RPCError(BAD_REQUEST, f'"verbose" must be a boolean')
