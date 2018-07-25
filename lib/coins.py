@@ -316,6 +316,23 @@ class MicroBitcoin(Coin):
     RPC_PORT = 6402
 
     @classmethod
+    def electrum_header(cls, header, height):
+        version, = struct.unpack('<I', header[:4])
+        timestamp, bits, nonce = struct.unpack('<III', header[68:80])
+        block_hash = bytes(reversed(cls.header_hash(header))).hex()
+
+        return {
+            'block_height': height,
+            'version': version,
+            'block_hash': block_hash,
+            'prev_block_hash': hash_to_str(header[4:36]),
+            'merkle_root': hash_to_str(header[36:68]),
+            'timestamp': timestamp,
+            'bits': bits,
+            'nonce': nonce,
+        }
+
+    @classmethod
     def header_hash(cls, header):
         timestamp = struct.unpack('<I', header[68:72])[0]
         if timestamp > cls.FORK_TIMESTAMP:

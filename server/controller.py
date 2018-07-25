@@ -706,6 +706,10 @@ class Controller(ServerBase):
 
         return {"block_height": height, "merkle": merkle_branch, "pos": pos}
 
+    async def tx_count(self, block_hash):
+        block = await self.daemon_request('deserialised_block', block_hash)
+        return len(block['tx'])
+
     async def get_balance(self, hashX):
         utxos = await self.get_utxos(hashX)
         confirmed = sum(utxo.value for utxo in utxos)
@@ -823,7 +827,7 @@ class Controller(ServerBase):
         height = self.non_negative_integer(height)
         return self.electrum_header(height)
 
-    def block_get_header_range(self, height_start, height_end):
+    async def block_get_header_range(self, height_start, height_end):
         '''Retun list of block headers in range'''
 
         height_start = self.non_negative_integer(height_start)
@@ -835,7 +839,10 @@ class Controller(ServerBase):
         headers_list = []
         for height in range(height_start, height_end):
             try:
-                headers_list.append(self.electrum_header(height))
+                header = self.electrum_header(height)
+                header['tx_count'] = await self.tx_count(header["block_hash"])
+                header.pop('prev_block_hash', None)
+                headers_list.append(header)
             except Exception as e:
                 break
 
@@ -899,3 +906,6 @@ class Controller(ServerBase):
         self.assert_tx_hash(tx_hash)
         height = self.non_negative_integer(height)
         return await self.tx_merkle(tx_hash, height)
+
+    async def transaction_get_count(self, block_hash):
+        return await self.tx_count(block_hash)
