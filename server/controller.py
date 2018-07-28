@@ -740,8 +740,6 @@ class Controller(ServerBase):
             result['confirmations'] = block['confirmations']
             result['time'] = block['time']
             result['hash'] = block['hash']
-            result['previousblockhash'] = block['previousblockhash']
-            result['nextblockhash'] = block['nextblockhash']
             result['merkleroot'] = block['merkleroot']
             result['nonce'] = block['nonce']
             result['version'] = block['version']
@@ -750,6 +748,17 @@ class Controller(ServerBase):
             result['difficulty'] = block['difficulty']
             result['strippedsize'] = block['strippedsize']
             result['size'] = block['size']
+
+            if 'previousblockhash' in block:
+                result['previousblockhash'] = block['previousblockhash']
+            else:
+                result['previousblockhash'] = ''
+
+            if 'nextblockhash' in block:
+                result['nextblockhash'] = block['nextblockhash']
+            else:
+                result['nextblockhash'] = ''
+
         result['tx'] = block_tx
         result['tx_count'] = len(block_tx)
 
