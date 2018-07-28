@@ -710,8 +710,7 @@ class Controller(ServerBase):
         block = await self.daemon_request('deserialised_block', block_hash)
         return len(block['tx'])
 
-    ################### TUT
-    async def block_info(self, block_hash, tx_start = 0, tx_offset = 20, tx_only = 0):
+    async def block_info(self, block_hash, tx_start = 0, tx_offset = 20):
         block_tx = []
         result = {}
         block = await self.daemon_request('deserialised_block', block_hash)
@@ -723,46 +722,29 @@ class Controller(ServerBase):
             except Exception as e:
                 break
 
-            self.assert_tx_hash(tx_hash)
+            if block["height"] != 0:
+                self.assert_tx_hash(tx_hash)
+                tx_data = await self.transaction_get(tx_hash, True)
+            else:
+                tx_data = {}
+
             tx_info = {}
-            tx_data = await self.transaction_get(tx_hash, True)
-            tx_info["txid"] = tx_data["txid"]
-            tx_info["size"] = tx_data["size"]
-            tx_info["time"] = tx_data["time"]
-            tx_info["vin"] = tx_data["vin"]
-            tx_info["vout"] = tx_data["vout"]
+            tx_info["hash"] = tx_hash
             tx_info["tx_index"] = tx_index
-            block_tx.append(tx_data)
+            tx_info["data"] = tx_data
+            
+            block_tx.append(tx_info)
 
-        if tx_only == False:
-            result['height'] = block['height']
-            result['weight'] = block['weight']
-            result['confirmations'] = block['confirmations']
-            result['time'] = block['time']
-            result['hash'] = block['hash']
-            result['merkleroot'] = block['merkleroot']
-            result['nonce'] = block['nonce']
-            result['version'] = block['version']
-            result['versionHex'] = block['versionHex']
-            result['bits'] = block['bits']
-            result['difficulty'] = block['difficulty']
-            result['strippedsize'] = block['strippedsize']
-            result['size'] = block['size']
+        if 'previousblockhash' not in block:
+            block['previousblockhash'] = ''
 
-            if 'previousblockhash' in block:
-                result['previousblockhash'] = block['previousblockhash']
-            else:
-                result['previousblockhash'] = ''
+        if 'nextblockhash' not in block:
+            block['nextblockhash'] = ''
 
-            if 'nextblockhash' in block:
-                result['nextblockhash'] = block['nextblockhash']
-            else:
-                result['nextblockhash'] = ''
+        block.pop('tx', None)
+        block['tx'] = block_tx
 
-        result['tx'] = block_tx
-        result['tx_count'] = len(block_tx)
-
-        return result
+        return block
 
     async def get_balance(self, hashX):
         utxos = await self.get_utxos(hashX)
