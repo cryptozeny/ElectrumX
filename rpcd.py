@@ -115,6 +115,7 @@ class RpcServer(BaseHTTPRequestHandler):
                 'blockchain.address.subscribe',
                 'blockchain.block.get_header',
                 'blockchain.block.get_header_range',
+                'blockchain.block.get_header_info',
                 'blockchain.estimatefee',
                 'blockchain.headers.subscribe',
                 'blockchain.relayfee',
