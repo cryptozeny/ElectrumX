@@ -716,14 +716,16 @@ class Controller(ServerBase):
         block = await self.daemon_request('deserialised_block', block_hash)
         block["tx_count"] = len(block['tx'])
 
-        for tx_index in range(int(tx_start), int(tx_offset) + 1):
+        if tx_offset > 40:
+            tx_offset = 40
+
+        for tx_index in range(int(tx_start), int(tx_start) + int(tx_offset)):
             try:
                 tx_hash = block['tx'][tx_index]
             except Exception as e:
                 break
 
             if block["height"] != 0:
-                self.assert_tx_hash(tx_hash)
                 tx_data = await self.transaction_get(tx_hash, True)
             else:
                 tx_data = {}
@@ -732,6 +734,10 @@ class Controller(ServerBase):
             tx_info["hash"] = tx_hash
             tx_info["tx_index"] = tx_index
             tx_info["data"] = tx_data
+            tx_info["amount"] = 0
+
+            for tx in tx_info["data"]["vout"]:
+                tx_info["amount"] += tx["valueSat"]
             
             block_tx.append(tx_info)
 
@@ -818,6 +824,40 @@ class Controller(ServerBase):
         hashX = self.address_to_hashX(address)
         return await self.confirmed_and_unconfirmed_history(hashX)
 
+    async def address_info(self, address, history_start = 0, history_offset = 20):
+        result = {}
+        address_tx = []
+        history = await self.address_get_history(address)
+        result["balance"] = await self.address_get_balance(address)
+        result["history_count"] = len(history)
+        result["address"] = address
+        result["history"] = []
+        history.reverse()
+
+        if history_offset > 40:
+            history_offset = 40
+
+        for tx_index in range(int(history_start), int(history_start) + int(history_offset)):
+            try:
+                tx_hash = history[tx_index]["tx_hash"]
+            except Exception as e:
+                break
+
+            if history[tx_index]["height"] != 0:
+                tx_data = await self.transaction_get(tx_hash, True)
+            else:
+                tx_data = {}
+
+            tx_info = {}
+            tx_info["tx_index"] = tx_index
+            tx_info["data"] = tx_data
+            
+            address_tx.append(tx_info)
+
+        result["history"] = address_tx
+
+        return result
+
     async def scripthash_get_history(self, scripthash):
         '''Return the confirmed and unconfirmed history of a scripthash.'''
         hashX = self.scripthash_to_hashX(scripthash)
@@ -850,6 +890,20 @@ class Controller(ServerBase):
         '''Return the list of UTXOs of an address.'''
         hashX = self.address_to_hashX(address)
         return await self.hashX_listunspent(hashX)
+
+    async def address_listunspent_script(self, address):
+        hashX = self.address_to_hashX(address)
+        utxos = await self.hashX_listunspent(hashX)
+        for index, tx in enumerate(utxos):
+            if tx["height"] != 0:
+                try:
+                    tx_data = await self.transaction_get(tx["tx_hash"], True)
+                    script = tx_data["vout"][tx["tx_pos"]]["scriptPubKey"]["hex"]
+                    utxos[index]["script"] = tx_data["vout"][tx["tx_pos"]]["scriptPubKey"]["hex"]
+                except Exception as e:
+                    break
+
+        return utxos
 
     async def scripthash_listunspent(self, scripthash):
         '''Return the list of UTXOs of a scripthash.'''
@@ -916,18 +970,23 @@ class Controller(ServerBase):
 
         return await self.daemon_request('getrawtransaction', tx_hash, verbose)
 
-    async def transaction_get_verbose(self, tx_hash, verbose=True):
-        '''Return the serialized raw transaction given its hash
-
-        tx_hash: the transaction hash as a hexadecimal string
-        verbose: passed on to the daemon
-        '''
-
+    async def transaction_get_verbose(self, tx_hash):
         self.assert_tx_hash(tx_hash)
-        if verbose not in (True, False):
-            raise RPCError(BAD_REQUEST, f'"verbose" must be a boolean')
+        tx_data = await self.daemon_request('getrawtransaction', tx_hash, True)
+        tx_data["amount"] = 0
+        tx_data["vin_count"] = len(tx_data["vin"])
+        tx_data["vout_count"] = len(tx_data["vout"])
 
-        return await self.daemon_request('getrawtransaction', tx_hash, verbose)
+        for index, vin in enumerate(tx_data["vin"]):
+            tx_data["vin"][index]["vin_index"] = index
+
+        for index, vout in enumerate(tx_data["vout"]):
+            tx_data["vout"][index]["vout_index"] = index
+
+        for tx in tx_data["vout"]:
+            tx_data["amount"] += tx["valueSat"]
+
+        return tx_data
 
     async def transaction_get_merkle(self, tx_hash, height):
         '''Return the markle tree to a confirmed transaction given its hash

@@ -268,6 +268,9 @@ class Daemon(object):
         return await self._send_single('getrawtransaction',
                                        (hex_hash, int(verbose)))
 
+    async def decodescript(self, script):
+        return await self._send_single('decodescript', (script))
+
     async def getrawtransactions(self, hex_hashes, replace_errs=True):
         '''Return the serialized raw transactions with the given hashes.
 
@@ -277,6 +280,11 @@ class Daemon(object):
                                       replace_errs=replace_errs)
         # Convert hex strings to bytes
         return [hex_to_bytes(tx) if tx else None for tx in txs]
+
+    async def getrawtransactions_verbose(self, hex_hashes):
+        params_iterable = ((hex_hash, True) for hex_hash in hex_hashes)
+        txs = await self._send_vector('getrawtransaction', params_iterable)
+        return txs
 
     async def sendrawtransaction(self, params):
         '''Broadcast a transaction to the network.'''
