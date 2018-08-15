@@ -846,7 +846,11 @@ class Controller(ServerBase):
             if history[tx_index]["height"] != 0:
                 tx_data = await self.transaction_get(tx_hash, True)
             else:
-                tx_data = {}
+                # In mempool
+                tx_data = {
+                    "txid": tx_hash,
+                    "height": 0
+                }
 
             tx_info = {}
             tx_info["tx_index"] = tx_index
@@ -891,19 +895,29 @@ class Controller(ServerBase):
         hashX = self.address_to_hashX(address)
         return await self.hashX_listunspent(hashX)
 
-    async def address_listunspent_script(self, address):
+    async def address_listunspent_script(self, address, tx_start = 0, tx_offset = 20):
         hashX = self.address_to_hashX(address)
         utxos = await self.hashX_listunspent(hashX)
-        for index, tx in enumerate(utxos):
+        utxos_result = []
+
+        for tx_index in range(int(tx_start), int(tx_start) + int(tx_offset)):
+            try:
+                tx = utxos[tx_index]
+            except Exception as e:
+                break
+
             if tx["height"] != 0:
                 try:
                     tx_data = await self.transaction_get(tx["tx_hash"], True)
                     script = tx_data["vout"][tx["tx_pos"]]["scriptPubKey"]["hex"]
-                    utxos[index]["script"] = tx_data["vout"][tx["tx_pos"]]["scriptPubKey"]["hex"]
+                    utxos[tx_index]["script"] = tx_data["vout"][tx["tx_pos"]]["scriptPubKey"]["hex"]
                 except Exception as e:
                     break
 
-        return utxos
+            utxos[tx_index]["tx_index"] = tx_index
+            utxos_result.append(utxos[tx_index])
+
+        return utxos_result
 
     async def scripthash_listunspent(self, scripthash):
         '''Return the list of UTXOs of a scripthash.'''
