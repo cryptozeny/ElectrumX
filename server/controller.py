@@ -834,8 +834,8 @@ class Controller(ServerBase):
         result["history"] = []
         history.reverse()
 
-        if history_offset > 40:
-            history_offset = 40
+        if int(history_offset) > 20:
+            history_offset = 20
 
         for tx_index in range(int(history_start), int(history_start) + int(history_offset)):
             try:
@@ -845,13 +845,15 @@ class Controller(ServerBase):
 
             if history[tx_index]["height"] != 0:
                 tx_data = await self.transaction_get(tx_hash, True)
+                tx_data.pop("vin", None)
+                tx_data.pop("vout", None)
             else:
                 # In mempool
                 tx_data = {
                     "txid": tx_hash,
                     "height": 0
                 }
-
+                
             tx_info = {}
             tx_info["tx_index"] = tx_index
             tx_info["data"] = tx_data
