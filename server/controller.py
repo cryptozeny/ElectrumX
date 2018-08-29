@@ -756,7 +756,7 @@ class Controller(ServerBase):
         utxos = await self.get_utxos(hashX)
         confirmed = sum(utxo.value for utxo in utxos)
         unconfirmed = self.mempool_value(hashX)
-        return {'confirmed': confirmed, 'unconfirmed': unconfirmed}
+        return {'confirmed': confirmed, 'unconfirmed': unconfirmed, 'total': confirmed - unconfirmed}
 
     async def unconfirmed_history(self, hashX):
         # Note unconfirmed history is unordered in electrum-server
@@ -918,6 +918,32 @@ class Controller(ServerBase):
 
             utxos[tx_index]["tx_index"] = tx_index
             utxos_result.append(utxos[tx_index])
+
+        return utxos_result
+
+    async def address_listunspent_amount(self, address, amount = 0):
+        hashX = self.address_to_hashX(address)
+        balance = await self.get_balance(hashX)
+        utxos = await self.hashX_listunspent(hashX)
+        utxos_result = []
+
+        if balance["total"] > int(amount):
+            current_amount = 0
+            for tx in utxos:
+                if tx["height"] != 0:
+                    try:
+                        tx_data = await self.transaction_get(tx["tx_hash"], True)
+                        tx["script"] = tx_data["vout"][tx["tx_pos"]]["scriptPubKey"]["hex"]
+                    except Exception as e:
+                        break
+
+                    utxos_result.append(tx)
+                    current_amount += tx["value"]
+                    if current_amount > amount:
+                        break
+
+        else:
+            raise RPCError(BAD_REQUEST, f'not enough funds')
 
         return utxos_result
 

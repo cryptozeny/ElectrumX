@@ -427,6 +427,7 @@ class ElectrumX(SessionBase):
             'blockchain.address.get_mempool': controller.address_get_mempool,
             'blockchain.address.listunspent': controller.address_listunspent,
             'blockchain.address.get_utxo': controller.address_listunspent_script,
+            'blockchain.address.get_utxo_amount': controller.address_listunspent_amount,
             'blockchain.address.subscribe': self.address_subscribe,
             'blockchain.address.info': controller.address_info,
             'blockchain.block.get_chunk': self.block_get_chunk,

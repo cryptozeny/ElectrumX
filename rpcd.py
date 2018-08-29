@@ -113,6 +113,7 @@ class RpcServer(BaseHTTPRequestHandler):
                 'blockchain.address.get_mempool',
                 'blockchain.address.listunspent',
                 'blockchain.address.get_utxo',
+                'blockchain.address.get_utxo_amount',
                 'blockchain.address.subscribe',
                 'blockchain.address.info',
                 'blockchain.block.get_header',
