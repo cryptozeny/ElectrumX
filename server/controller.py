@@ -939,7 +939,7 @@ class Controller(ServerBase):
 
                     utxos_result.append(tx)
                     current_amount += tx["value"]
-                    if current_amount > amount:
+                    if current_amount > int(amount):
                         break
 
         else:

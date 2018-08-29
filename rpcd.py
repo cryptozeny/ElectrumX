@@ -83,7 +83,6 @@ def create_rpc(result_data, rpc_id):
     except Exception as e:
         result = {"jsonrpc": "2.0", "error": {"code": -32700, "message": "Parse error"}, "id": None}
 
-
     return result
 
 
