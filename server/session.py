@@ -430,6 +430,7 @@ class ElectrumX(SessionBase):
             'blockchain.address.get_utxo_amount': controller.address_listunspent_amount,
             'blockchain.address.subscribe': self.address_subscribe,
             'blockchain.address.info': controller.address_info,
+            'blockchain.address.history': controller.address_history_pagination,
             'blockchain.block.get_chunk': self.block_get_chunk,
             'blockchain.block.get_header': controller.block_get_header,
             'blockchain.block.get_header_range': controller.block_get_header_range,

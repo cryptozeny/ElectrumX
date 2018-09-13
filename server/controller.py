@@ -827,15 +827,30 @@ class Controller(ServerBase):
     async def address_info(self, address, history_start = 0, history_offset = 20):
         result = {}
         address_tx = []
-        history = await self.address_get_history(address)
         result["balance"] = await self.address_get_balance(address)
-        result["history_count"] = len(history)
         result["address"] = address
         result["history"] = []
+
+        if int(history_offset) > 40:
+            history_offset = 40
+
+        history = await self.address_history_pagination(address, history_start, history_offset)
+        result["history"] = history["history"]
+        result["history_count"] = history["total"]
+
+        return result
+
+    async def address_history_pagination(self, address, history_start = 0, history_offset = 20):
+        history = await self.address_get_history(address)
         history.reverse()
 
-        if int(history_offset) > 20:
-            history_offset = 20
+        result = {}
+        address_tx = []
+        result["total"] = len(history)
+        result["history"] = []
+
+        if int(history_offset) > 40:
+            history_offset = 40
 
         for tx_index in range(int(history_start), int(history_start) + int(history_offset)):
             try:
