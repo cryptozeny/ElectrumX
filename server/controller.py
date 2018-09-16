@@ -980,12 +980,18 @@ class Controller(ServerBase):
         height_start = self.non_negative_integer(height_start)
         height_end = self.non_negative_integer(height_end)
 
+        if height_end - height_start > 100:
+            height_end = height_start + 100
+
         headers_list = []
         for height in range(height_start, height_end + 1):
             try:
                 header = self.electrum_header(height)
-                header['tx_count'] = await self.tx_count(header["block_hash"])
-                # header.pop('prev_block_hash', None)
+                block = await self.daemon_request('deserialised_block', header["block_hash"])
+                header['tx_count'] = len(block['tx'])
+                header['difficulty'] = block['difficulty']
+                header['size'] = block['size']
+
                 headers_list.append(header)
             except Exception as e:
                 break
