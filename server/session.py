@@ -436,6 +436,7 @@ class ElectrumX(SessionBase):
             'blockchain.block.get_header_range': controller.block_get_header_range,
             'blockchain.block.get_header_info': controller.block_info,
             'blockchain.estimatefee': controller.estimatefee,
+            'blockchain.estimatesmartfee': controller.estimatesmartfee,
             'blockchain.headers.subscribe': self.headers_subscribe,
             'blockchain.relayfee': controller.relayfee,
             'blockchain.scripthash.get_balance':
