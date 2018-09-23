@@ -756,7 +756,7 @@ class Controller(ServerBase):
         utxos = await self.get_utxos(hashX)
         confirmed = sum(utxo.value for utxo in utxos)
         unconfirmed = self.mempool_value(hashX)
-        return {'confirmed': confirmed, 'unconfirmed': unconfirmed, 'total': confirmed - unconfirmed}
+        return {'confirmed': confirmed, 'unconfirmed': unconfirmed}
 
     async def unconfirmed_history(self, hashX):
         # Note unconfirmed history is unordered in electrum-server
@@ -942,7 +942,7 @@ class Controller(ServerBase):
         utxos = await self.hashX_listunspent(hashX)
         utxos_result = []
 
-        if balance["total"] > int(amount):
+        if balance["confirmed"] >= int(amount):
             current_amount = 0
             for tx in utxos:
                 if tx["height"] != 0:
@@ -958,7 +958,7 @@ class Controller(ServerBase):
                         break
 
         else:
-            raise RPCError(BAD_REQUEST, f'not enough funds')
+            return "Not enough funds"
 
         return utxos_result
 
@@ -1006,6 +1006,15 @@ class Controller(ServerBase):
         '''
         number = self.non_negative_integer(number)
         return await self.daemon_request('estimatefee', [number])
+
+    async def estimatesmartfee(self, number = 6):
+        number = self.non_negative_integer(number)
+        data = await self.daemon_request('estimatesmartfee', number)
+
+        if "errors" in data:
+            return "Fee estimation failed"
+        else:
+            return data
 
     def mempool_get_fee_histogram(self):
         '''Memory pool fee histogram.
