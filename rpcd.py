@@ -49,22 +49,41 @@ def handle_rpc(raw_data):
     error = False
     error_message = ""
     error_code = 0
+    isjson = False
+    method = ""
+    rid = ""
 
     try:
-        data = json.loads(raw_data)
+        try:
+            data = json.loads(raw_data)
+            isjson = True
+        except Exception as e:
+            data = parse.parse_qs(raw_data)
 
-        if "jsonrpc" not in data or "method" not in data:
+        if isjson and data["jsonrpc"] != "2.0":
             error = True
             error_message = "Invalid Request"
-            error_code = -32600 
+            error_code = -32600
 
-        if "params" in data:
-            if error == False:
-                result["params"] = data["params"]
+        if "method" not in data:
+            error = True
+            error_message = "Invalid Request"
+            error_code = -32600
+        else:
+            method = data["method"] if isjson else data["method"][0]
+            if method not in allowed:
+                error = True
+                error_message = "Invalid Request"
+                error_code = -32601
+
+        if "params[]" in data:
+            data["params"] = data["params[]"]
+            data.pop("params[]", None)
 
         if "id" in data:
-            if type(data["id"]) is str or type(data["id"]) is int:
-                result["id"] = data["id"]
+            rid = data["id"] if isjson else data["id"][0]
+            if type(rid) is str or type(rid) is int:
+                result["id"] = rid
 
         if error == True:
             result["error"] = {
@@ -72,8 +91,9 @@ def handle_rpc(raw_data):
                 "message": error_message
             }
         else:
-            result["method"] = data["method"]
-            result["params"] = data["params"]
+            result["method"] = method
+            if "params" in data:
+                result["params"] = data["params"]
 
     except ValueError:
         result = {"jsonrpc": "2.0", "error": {"code": -32700, "message": "Parse error"}, "id": None}
@@ -98,7 +118,7 @@ def create_rpc(result_data, rpc_id):
         else:
             error = True
             error_message = "Invalid Request: {}".format(result_data)
-            error_code = -32600 
+            error_code = -32600
 
         if error == True:
             result["error"] = {
@@ -135,20 +155,23 @@ class RpcServer(BaseHTTPRequestHandler):
         request_self.wfile.write(json.dumps(create_rpc(response, rid)).encode('utf-8'))
 
     def do_GET(self):
-        data = parse.parse_qs(parse.urlparse(self.path).query)
-
-        rid = data["id"] if ("id" in data) else "electrumx"
-        method = data["method"][0] if ("method" in data) else []
-        params = data["params[]"] if ("params[]" in data) else []
+        data = handle_rpc(parse.urlparse(self.path).query)
         loop = asyncio.get_event_loop()
 
-        try:
-            loop.run_until_complete(self.send_request(self, method, params, rid))
-        except OSError:
-            print('cannot connect - is ElectrumX catching up, not running, or '
-                  f'is {port} the wrong RPC port?')
-        except Exception as e:
-            print(f'error making request: {e}')
+        if "error" not in data:
+            loop = asyncio.get_event_loop()
+            
+            try:
+                loop.run_until_complete(self.send_request(self, data["method"], data["params"], data["id"]))
+            except OSError:
+                print('cannot connect - is ElectrumX catching up, not running, or '
+                      f'is {port} the wrong RPC port?')
+            except Exception as e:
+                print(f'error making request: {e}')
+
+        else:
+            self._set_response()
+            self.wfile.write(json.dumps(dead_response, indent=4, sort_keys=True).encode('utf-8'))
         
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
@@ -156,13 +179,10 @@ class RpcServer(BaseHTTPRequestHandler):
         data = handle_rpc(post_data.decode('utf-8'))
 
         if "error" not in data:
-            rid = data["id"] if ("id" in data) else "electrumx"
-            method = data["method"] if ("method" in data) else []
-            params = data["params"] if ("params" in data) else []
             loop = asyncio.get_event_loop()
             
             try:
-                loop.run_until_complete(self.send_request(self, method, params, rid))
+                loop.run_until_complete(self.send_request(self, data["method"], data["params"], data["id"]))
             except OSError:
                 print('cannot connect - is ElectrumX catching up, not running, or '
                       f'is {port} the wrong RPC port?')
