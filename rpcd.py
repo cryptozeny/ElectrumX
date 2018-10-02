@@ -31,6 +31,7 @@ allowed = [
     'blockchain.estimatesmartfee',
     'blockchain.headers.subscribe',
     'blockchain.relayfee',
+    'blockchain.supply',
     'blockchain.transaction.broadcast',
     'blockchain.transaction.get',
     'blockchain.transaction.get_verbose',
@@ -116,6 +117,7 @@ class RpcServer(BaseHTTPRequestHandler):
     def _set_response(self):
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
 
     async def send_request(self, request_self, method, params, rid):
@@ -172,7 +174,7 @@ class RpcServer(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(dead_response, indent=4, sort_keys=True).encode('utf-8'))
 
 
-def run(server_class=HTTPServer, handler_class=RpcServer, port=1234):
+def run(server_class=HTTPServer, handler_class=RpcServer, port=4321):
     server_address = ('', port)
     rpcd = server_class(server_address, handler_class)
     print('Starting rpcd on port {}...\n'.format(port))
