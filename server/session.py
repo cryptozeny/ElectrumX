@@ -439,6 +439,7 @@ class ElectrumX(SessionBase):
             'blockchain.estimatesmartfee': controller.estimatesmartfee,
             'blockchain.headers.subscribe': self.headers_subscribe,
             'blockchain.relayfee': controller.relayfee,
+            'blockchain.supply': controller.supply,
             'blockchain.scripthash.get_balance':
             controller.scripthash_get_balance,
             'blockchain.scripthash.get_history':
