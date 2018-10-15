@@ -1073,3 +1073,37 @@ class Controller(ServerBase):
 
     async def transaction_get_count(self, block_hash):
         return await self.tx_count(block_hash)
+
+    def supply(self, height = 0):
+        # TODO: Make this stuff not hardcoded
+        height = self.non_negative_integer(height)
+        op_height = self.bp.db_height if int(height) == 0 else int(height)
+        calc_height = op_height
+        reward = 50 * 10000
+        supply = 0
+        halvings = 209999
+        halvings_count = 0
+        hardfork_height = 525000
+        premine_amount = 1050000 * 10000
+        
+        while calc_height > halvings:
+            total = halvings * reward
+            reward = reward / 2.0
+            calc_height_buff = calc_height + halvings
+            calc_height = calc_height - halvings
+            halvings_count += 1
+
+            if halvings_count == 2:
+                halvings = hardfork_height - (halvings * 2)
+            elif halvings_count == 3:
+                halvings = 1574991 - (halvings + (209999 * 2))
+                reward = (reward * 2) / 10
+                total -= reward
+
+            supply += total
+        
+        supply = supply + calc_height * reward
+        if op_height > hardfork_height:
+            supply += premine_amount
+
+        return {'height': height, 'supply': int(supply), 'halvings_count': int(halvings_count if halvings_count < 2 else halvings_count - 1), 'reward': int(reward)}
