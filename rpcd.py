@@ -16,27 +16,20 @@ port = int(environ.get('RPC_PORT', 7403))
 rpc_port = int(environ.get('RPC_PORT', 8000))
 dead_response = {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": None}
 allowed = [
-    'blockchain.address.get_balance',
-    'blockchain.address.get_history',
-    'blockchain.address.get_mempool',
-    'blockchain.address.listunspent',
-    'blockchain.address.get_utxo_amount',
-    'blockchain.address.subscribe',
-    'blockchain.address.info',
+    'blockchain.address.balance',
     'blockchain.address.history',
-    'blockchain.block.get_header',
-    'blockchain.block.get_header_range',
-    'blockchain.block.get_header_info',
+    'blockchain.address.mempool',
+    'blockchain.address.utxo',
+    'blockchain.address.info',
+    'blockchain.block.info',
+    'blockchain.block.range',
+    'blockchain.block.header',
+    'blockchain.transaction.raw',
+    'blockchain.transaction.verbose',
+    'blockchain.transaction.send',
     'blockchain.estimatesmartfee',
-    'blockchain.headers.subscribe',
-    'blockchain.relayfee',
     'blockchain.supply',
-    'blockchain.transaction.broadcast',
-    'blockchain.transaction.get',
-    'blockchain.transaction.get_verbose',
-    'blockchain.transaction.get_merkle',
-    'blockchain.info',
-    'getinfo'
+    'blockchain.info'
 ]
 
 def handle_rpc(raw_data):

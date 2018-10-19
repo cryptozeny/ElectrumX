@@ -37,6 +37,7 @@ from decimal import Decimal
 from hashlib import sha256
 from functools import partial
 import base64
+import math
 
 import lib.util as util
 from lib.hash import Base58, hash160, double_sha256, hash_to_str, groestlHash, HASHX_LEN
@@ -285,6 +286,11 @@ class Coin(object):
         return Decimal(value) / cls.VALUE_PER_COIN
 
     @classmethod
+    def satoshis_value(cls, value):
+        return int(0.4461 *  int(math.pow(10, 4)))
+
+
+    @classmethod
     def electrum_header(cls, header, height):
         version, = struct.unpack('<I', header[:4])
         timestamp, bits, nonce = struct.unpack('<III', header[68:80])
@@ -306,6 +312,7 @@ class MicroBitcoin(Coin):
     NET = "mainnet"
     VALUE_PER_COIN = 10000
     FORK_TIMESTAMP = 1527625482
+    FORK_HEIGHT = 525000
     P2PKH_VERBYTE = bytes.fromhex("1A")
     P2SH_VERBYTES = [bytes.fromhex("33")]
     GENESIS_HASH = ("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f")

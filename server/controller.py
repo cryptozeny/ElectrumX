@@ -716,8 +716,8 @@ class Controller(ServerBase):
         block = await self.daemon_request('deserialised_block', block_hash)
         block["tx_count"] = len(block['tx'])
 
-        if tx_offset > 40:
-            tx_offset = 40
+        if tx_offset > 100:
+            tx_offset = 100
 
         for tx_index in range(int(tx_start), int(tx_start) + int(tx_offset)):
             try:
@@ -831,9 +831,6 @@ class Controller(ServerBase):
         result["address"] = address
         result["history"] = []
 
-        if int(history_offset) > 40:
-            history_offset = 40
-
         history = await self.address_history_pagination(address, history_start, history_offset)
         result["history"] = history["history"]
         result["history_count"] = history["total"]
@@ -849,8 +846,8 @@ class Controller(ServerBase):
         result["total"] = len(history)
         result["history"] = []
 
-        if int(history_offset) > 40:
-            history_offset = 40
+        if int(history_offset) > 100:
+            history_offset = 100
 
         for tx_index in range(int(history_start), int(history_start) + int(history_offset)):
             try:
@@ -936,7 +933,7 @@ class Controller(ServerBase):
 
         return utxos_result
 
-    async def address_listunspent_amount(self, address, amount = 0):
+    async def address_listunspent_amount(self, address, amount = 1):
         hashX = self.address_to_hashX(address)
         balance = await self.get_balance(hashX)
         utxos = await self.hashX_listunspent(hashX)
@@ -1009,11 +1006,21 @@ class Controller(ServerBase):
 
     async def estimatesmartfee(self, number = 6):
         number = self.non_negative_integer(number)
-        data = await self.daemon_request('estimatesmartfee', number)
+        data = await self.daemon_request('estimatesmartfee', [number])
 
         if "errors" in data:
             return "Fee estimation failed"
         else:
+            return data
+
+    async def estimatesmartfee2(self, number = 6):
+        number = self.non_negative_integer(number)
+        data = await self.daemon_request('estimatesmartfee', [number])
+
+        if "errors" in data:
+            return "Fee estimation failed"
+        else:
+            data["feerate"] = self.coin.satoshis_value(data["feerate"])
             return data
 
     def mempool_get_fee_histogram(self):
@@ -1041,6 +1048,12 @@ class Controller(ServerBase):
             raise RPCError(BAD_REQUEST, f'"verbose" must be a boolean')
 
         return await self.daemon_request('getrawtransaction', tx_hash, verbose)
+
+    async def transaction_get_raw(self, tx_hash):
+        self.assert_tx_hash(tx_hash)
+        rawtx = await self.daemon_request('getrawtransaction', tx_hash, False)
+
+        return {'rawtx': rawtx}
 
     async def transaction_get_verbose(self, tx_hash):
         self.assert_tx_hash(tx_hash)
@@ -1091,12 +1104,12 @@ class Controller(ServerBase):
         height = self.non_negative_integer(height)
         op_height = self.bp.db_height if int(height) == 0 else int(height)
         calc_height = op_height
-        reward = 50 * 10000
+        reward = 50 * self.coin.VALUE_PER_COIN
         supply = 0
         halvings = 209999
         halvings_count = 0
-        hardfork_height = 525000
-        premine_amount = 1050000 * 10000
+        hardfork_height = self.coin.FORK_HEIGHT
+        premine_amount = 1050000 * self.coin.VALUE_PER_COIN
         
         while calc_height > halvings:
             total = halvings * reward
@@ -1118,4 +1131,4 @@ class Controller(ServerBase):
         if op_height > hardfork_height:
             supply += premine_amount
 
-        return {'height': op_height, 'supply': int(supply), 'halvings_count': int(halvings_count if halvings_count < 2 else halvings_count - 1), 'reward': int(reward)}
+        return {'height': op_height, 'supply': int(supply * self.coin.VALUE_PER_COIN), 'halvings_count': int(halvings_count if halvings_count < 2 else halvings_count - 1), 'reward': int(reward)}

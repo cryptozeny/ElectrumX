@@ -414,6 +414,24 @@ class ElectrumX(SessionBase):
             raise RPCError(BAD_REQUEST, 'the transaction was rejected by '
                            f'network rules.\n\n{message}\n[{raw_tx}]')
 
+    async def transaction_send(self, raw_tx):
+        '''Broadcast a raw transaction to the network.
+
+        raw_tx: the raw transaction as a hexadecimal string'''
+        # This returns errors as JSON RPC errors, as is natural
+        try:
+            tx_hash = await self.daemon.sendrawtransaction([raw_tx])
+            self.txs_sent += 1
+            self.logger.info('sent tx: {}'.format(tx_hash))
+            self.controller.sent_tx(tx_hash)
+            return {"txhash": tx_hash}
+        except DaemonError as e:
+            error, = e.args
+            message = error['message']
+            self.logger.info('sendrawtransaction: {}'.format(message))
+            raise RPCError(BAD_REQUEST, 'the transaction was rejected by '
+                           f'network rules.\n\n{message}\n[{raw_tx}]')
+
     def set_protocol_handlers(self, ptuple):
         protocol_version = '.'.join(str(part) for part in ptuple)
         if protocol_version == self.protocol_version:
@@ -425,36 +443,37 @@ class ElectrumX(SessionBase):
             'blockchain.address.get_balance': controller.address_get_balance,
             'blockchain.address.get_history': controller.address_get_history,
             'blockchain.address.get_mempool': controller.address_get_mempool,
+            'blockchain.address.mempool': controller.address_get_mempool,
             'blockchain.address.listunspent': controller.address_listunspent,
             'blockchain.address.get_utxo': controller.address_listunspent_script,
             'blockchain.address.get_utxo_amount': controller.address_listunspent_amount,
+            'blockchain.address.utxo': controller.address_listunspent_amount,
             'blockchain.address.subscribe': self.address_subscribe,
-            'blockchain.address.info': controller.address_info,
             'blockchain.address.history': controller.address_history_pagination,
+            'blockchain.address.balance': controller.address_get_balance,
+            'blockchain.address.info': controller.address_info,
             'blockchain.block.get_chunk': self.block_get_chunk,
             'blockchain.block.get_header': controller.block_get_header,
-            'blockchain.block.get_header_range': controller.block_get_header_range,
-            'blockchain.block.get_header_info': controller.block_info,
+            'blockchain.block.header': controller.block_get_header,
+            'blockchain.block.range': controller.block_get_header_range,
+            'blockchain.block.info': controller.block_info,
             'blockchain.estimatefee': controller.estimatefee,
             'blockchain.estimatesmartfee': controller.estimatesmartfee,
             'blockchain.headers.subscribe': self.headers_subscribe,
             'blockchain.relayfee': controller.relayfee,
             'blockchain.supply': controller.supply,
             'blockchain.info': controller.getchaininfo,
-            'blockchain.scripthash.get_balance':
-            controller.scripthash_get_balance,
-            'blockchain.scripthash.get_history':
-            controller.scripthash_get_history,
-            'blockchain.scripthash.get_mempool':
-            controller.scripthash_get_mempool,
-            'blockchain.scripthash.listunspent':
-            controller.scripthash_listunspent,
+            'blockchain.scripthash.get_balance': controller.scripthash_get_balance,
+            'blockchain.scripthash.get_history': controller.scripthash_get_history,
+            'blockchain.scripthash.get_mempool': controller.scripthash_get_mempool,
+            'blockchain.scripthash.listunspent': controller.scripthash_listunspent,
             'blockchain.scripthash.subscribe': self.scripthash_subscribe,
             'blockchain.transaction.broadcast': self.transaction_broadcast,
+            'blockchain.transaction.send': self.transaction_send,
             'blockchain.transaction.get': controller.transaction_get,
-            'blockchain.transaction.get_verbose': controller.transaction_get_verbose,
-            'blockchain.transaction.get_merkle':
-            controller.transaction_get_merkle,
+            'blockchain.transaction.raw': controller.transaction_get_raw,
+            'blockchain.transaction.verbose': controller.transaction_get_verbose,
+            'blockchain.transaction.get_merkle': controller.transaction_get_merkle,
             'server.add_peer': self.add_peer,
             'server.banner': self.banner,
             'server.donation_address': self.donation_address,
