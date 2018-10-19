@@ -308,6 +308,10 @@ class Daemon(object):
         If the daemon has not been queried yet this returns None.'''
         return self._height
 
+    async def getblockchaininfo(self):
+        '''Get blockchain info'''
+        return await self._send_single('getblockchaininfo')
+
 
 class DashDaemon(Daemon):
 

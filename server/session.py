@@ -440,6 +440,7 @@ class ElectrumX(SessionBase):
             'blockchain.headers.subscribe': self.headers_subscribe,
             'blockchain.relayfee': controller.relayfee,
             'blockchain.supply': controller.supply,
+            'blockchain.info': controller.getchaininfo,
             'blockchain.scripthash.get_balance':
             controller.scripthash_get_balance,
             'blockchain.scripthash.get_history':

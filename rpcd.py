@@ -36,6 +36,7 @@ allowed = [
     'blockchain.transaction.get',
     'blockchain.transaction.get_verbose',
     'blockchain.transaction.get_merkle',
+    'blockchain.info',
     'getinfo'
 ]
 

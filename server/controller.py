@@ -1074,6 +1074,18 @@ class Controller(ServerBase):
     async def transaction_get_count(self, block_hash):
         return await self.tx_count(block_hash)
 
+    async def getchaininfo(self):
+        data = await self.daemon_request('getblockchaininfo')
+        result = {
+            "blocks": data["headers"],
+            "db_height": self.bp.db_height,
+            "difficulty": data["difficulty"],
+            "bestblockhash": data["bestblockhash"],
+            "chain": data["chain"]
+        }
+
+        return result
+
     def supply(self, height = 0):
         # TODO: Make this stuff not hardcoded
         height = self.non_negative_integer(height)
@@ -1106,4 +1118,4 @@ class Controller(ServerBase):
         if op_height > hardfork_height:
             supply += premine_amount
 
-        return {'height': height, 'supply': int(supply), 'halvings_count': int(halvings_count if halvings_count < 2 else halvings_count - 1), 'reward': int(reward)}
+        return {'height': op_height, 'supply': int(supply), 'halvings_count': int(halvings_count if halvings_count < 2 else halvings_count - 1), 'reward': int(reward)}
