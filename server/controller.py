@@ -1077,7 +1077,7 @@ class Controller(ServerBase):
     async def getchaininfo(self):
         data = await self.daemon_request('getblockchaininfo')
         result = {
-            "blocks": data["headers"],
+            "height": data["headers"],
             "db_height": self.bp.db_height,
             "difficulty": data["difficulty"],
             "bestblockhash": data["bestblockhash"],

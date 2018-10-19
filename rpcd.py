@@ -20,7 +20,6 @@ allowed = [
     'blockchain.address.get_history',
     'blockchain.address.get_mempool',
     'blockchain.address.listunspent',
-    'blockchain.address.get_utxo',
     'blockchain.address.get_utxo_amount',
     'blockchain.address.subscribe',
     'blockchain.address.info',
