@@ -287,8 +287,7 @@ class Coin(object):
 
     @classmethod
     def satoshis_value(cls, value):
-        return int(0.4461 *  int(math.pow(10, 4)))
-
+        return int(value * cls.VALUE_PER_COIN)
 
     @classmethod
     def electrum_header(cls, header, height):
