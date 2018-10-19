@@ -1011,15 +1011,6 @@ class Controller(ServerBase):
         if "errors" in data:
             return "Fee estimation failed"
         else:
-            return data
-
-    async def estimatesmartfee2(self, number = 6):
-        number = self.non_negative_integer(number)
-        data = await self.daemon_request('estimatesmartfee', [number])
-
-        if "errors" in data:
-            return "Fee estimation failed"
-        else:
             data["feerate"] = self.coin.satoshis_value(data["feerate"])
             return data
 
