@@ -971,6 +971,17 @@ class Controller(ServerBase):
         height = self.non_negative_integer(height)
         return self.electrum_header(height)
 
+    async def block_api_header(self, height):
+        '''The deserialized header at a given height.
+
+        height: the header's height'''
+        height = self.non_negative_integer(height)
+        header = self.electrum_header(height)
+        block = await self.daemon_request('deserialised_block', header["block_hash"])
+        header['difficulty'] = block['difficulty']
+        
+        return header
+
     async def block_get_header_range(self, height_start, height_end):
         '''Retun list of block headers in range'''
 
@@ -1089,6 +1100,11 @@ class Controller(ServerBase):
         }
 
         return result
+
+    async def get_raw_header_api(self, height):
+        height = self.non_negative_integer(height)
+        raw_header = self.raw_header(height)
+        return {'hex': raw_header.hex(), 'height': height}
 
     def supply(self, height = 0):
         # TODO: Make this stuff not hardcoded

@@ -24,6 +24,7 @@ allowed = [
     'blockchain.block.info',
     'blockchain.block.range',
     'blockchain.block.header',
+    'blockchain.block.raw',
     'blockchain.transaction.raw',
     'blockchain.transaction.verbose',
     'blockchain.transaction.send',
