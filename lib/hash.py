@@ -260,4 +260,4 @@ class Bech32(object):
         ret = bech32_encode(hrp, [witver] + convertbits(witprog, 8, 5))
         if decode(hrp, ret) == (None, None):
             return None
-    return ret
+        return ret
