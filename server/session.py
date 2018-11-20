@@ -481,6 +481,7 @@ class ElectrumX(SessionBase):
             'server.features': self.controller.server_features,
             'server.peers.subscribe': self.peers_subscribe,
             'server.version': self.server_version,
+            'server.status': controller.server_status,
         }
 
         if ptuple >= (1, 2):

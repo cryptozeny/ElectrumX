@@ -6,15 +6,16 @@ Usage::
 from aiorpcx import ClientSession
 from server.controller import Controller
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from server.version import NAME
 from urllib import parse
 from os import environ
 import asyncio
 import json
 import re
 
+node_name = NAME
 port = int(environ.get('RPC_PORT', 7403))
 rpc_port = int(environ.get('RPC_PORT', 8000))
-dead_response = {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": None}
 allowed = [
     'blockchain.address.balance',
     'blockchain.address.history',
@@ -30,17 +31,22 @@ allowed = [
     'blockchain.transaction.send',
     'blockchain.estimatesmartfee',
     'blockchain.supply',
-    'blockchain.info'
+    'blockchain.info',
+    'server.status'
 ]
+
+def dead_response(code = -32600, message = "Invalid Request", rid = node_name):
+    return {"jsonrpc": "2.0", "error": {"code": code, "message": message}, "id": rid}
 
 def handle_rpc(raw_data):
     result = {
         "jsonrpc": "2.0",
         "params": [],
-        "id": None
+        "id": node_name
     }
 
     error = False
+    blank = False
     error_message = ""
     error_code = 0
     isjson = False
@@ -60,9 +66,7 @@ def handle_rpc(raw_data):
             error_code = -32600
 
         if "method" not in data:
-            error = True
-            error_message = "Invalid Request"
-            error_code = -32600
+            blank = True
         else:
             method = data["method"] if isjson else data["method"][0]
             if method not in allowed:
@@ -85,12 +89,15 @@ def handle_rpc(raw_data):
                 "message": error_message
             }
         else:
-            result["method"] = method
-            if "params" in data:
-                result["params"] = data["params"]
+            if blank:
+                result["method"] = "server.status"
+            else:
+                result["method"] = method
+                if "params" in data:
+                    result["params"] = data["params"]
 
     except ValueError:
-        result = {"jsonrpc": "2.0", "error": {"code": -32700, "message": "Parse error"}, "id": None}
+        result = dead_response(-32700, "Parse error")
 
     return result
 
@@ -122,7 +129,7 @@ def create_rpc(result_data, rpc_id):
         else:
             result["result"] = data
     except Exception as e:
-        result = {"jsonrpc": "2.0", "error": {"code": -32700, "message": "Parse error"}, "id": None}
+        result = dead_response(-32700, "Parse error")
 
     return result
 
@@ -165,7 +172,7 @@ class RpcServer(BaseHTTPRequestHandler):
 
         else:
             self._set_response()
-            self.wfile.write(json.dumps(dead_response, indent=4, sort_keys=True).encode('utf-8'))
+            self.wfile.write(json.dumps(dead_response(), indent=4, sort_keys=True).encode('utf-8'))
         
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
@@ -185,7 +192,7 @@ class RpcServer(BaseHTTPRequestHandler):
 
         else:
             self._set_response()
-            self.wfile.write(json.dumps(dead_response, indent=4, sort_keys=True).encode('utf-8'))
+            self.wfile.write(json.dumps(dead_response(), indent=4, sort_keys=True).encode('utf-8'))
 
 
 def run(server_class=HTTPServer, handler_class=RpcServer, port=4321):

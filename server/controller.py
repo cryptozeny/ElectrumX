@@ -420,6 +420,15 @@ class Controller(ServerBase):
             'uptime': util.formatted_time(time.time() - self.start_time),
         }
 
+    def server_status(self):
+        '''A one-line summary of server state.'''
+        group_map = self._group_map()
+        return {
+            'height': self.bp.db_height,
+            'txs_sent': self.txs_sent,
+            'uptime': util.formatted_time(time.time() - self.start_time),
+        }
+
     def sub_count(self):
         return sum(s.sub_count() for s in self.sessions)
 
