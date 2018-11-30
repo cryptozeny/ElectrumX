@@ -1066,12 +1066,27 @@ class Controller(ServerBase):
 
         return {'rawtx': rawtx}
 
-    async def transaction_get_verbose(self, tx_hash):
+    async def process_vin(self, vin_data):
+        for index, vin in enumerate(vin_data):
+            if "coinbase" not in vin:
+                data = await self.transaction_get_verbose(vin["txid"], 0, 0, 0)
+
+                vin_data[index]["value"] = data["vout"][vin["vout"]]["value"]
+                vin_data[index]["valueSat"] = data["vout"][vin["vout"]]["valueSat"]
+                if "scriptPubKey" in data["vout"][vin["vout"]]:
+                    vin_data[index]["scriptPubKey"] = data["vout"][vin["vout"]]["scriptPubKey"]
+
+        return vin_data
+
+    async def transaction_get_verbose(self, tx_hash, vin_start = 0, vin_offset = 20, vin_load = 1):
         self.assert_tx_hash(tx_hash)
         tx_data = await self.daemon_request('getrawtransaction', tx_hash, True)
         tx_data["amount"] = 0
         tx_data["vin_count"] = len(tx_data["vin"])
         tx_data["vout_count"] = len(tx_data["vout"])
+
+        if vin_offset > 100:
+            vin_offset = 100
 
         for index, vin in enumerate(tx_data["vin"]):
             tx_data["vin"][index]["vin_index"] = index
@@ -1081,6 +1096,9 @@ class Controller(ServerBase):
 
         for tx in tx_data["vout"]:
             tx_data["amount"] += tx["valueSat"]
+
+        if vin_load:
+            tx_data["vin"] = await self.process_vin(tx_data["vin"][int(vin_start):int(vin_start) + int(vin_offset)])
 
         return tx_data
 
